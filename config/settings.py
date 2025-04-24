@@ -1,7 +1,5 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List
 from pathlib import Path
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).parent
 ENV_PATH = BASE_DIR / ".env" if (BASE_DIR / ".env").exists() else BASE_DIR.parent / ".env"
