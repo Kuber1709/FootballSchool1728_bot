@@ -1,4 +1,4 @@
-from asyncio import Lock
+from asyncio import Lock, sleep
 
 from aiogram import Router, F
 from aiogram.filters import CommandStart, Command
@@ -24,7 +24,8 @@ media_types = {
     ContentType.ANIMATION
 }
 
-user_locks = []
+user_locks = {}
+user_busy_flags = {}
 
 
 @admin_messages_router.message(CommandStart())
@@ -70,7 +71,7 @@ async def add_advertisement(message: Message, state: FSMContext):
 
 
 @admin_messages_router.message(UndoFilter())
-async def undo_advertisement(message: Message, state: FSMContext, lock: Lock):
+async def undo_advertisement(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
     count = await rq.cnt_advertisements()
 
@@ -88,22 +89,22 @@ async def undo_advertisement(message: Message, state: FSMContext, lock: Lock):
 
 @admin_messages_router.message(AddAdvertisement.menu_id)
 async def add_advertisement(message: Message, state: FSMContext):
-    lock = Lock()
-    await lock.acquire()
-    if not AddAdvertisement.menu_id:
-        await message.delete()
-        lock.release()
-        return
+    user_id = message.from_user.id
+    if user_id not in user_locks:
+        user_locks[user_id] = Lock()
+    lock = user_locks[user_id]
 
-    # user_locks.append(message.from_user.id)
+    async with lock:
+        if user_busy_flags.get(user_id) is True:
+            await message.delete()
+            return
+        user_busy_flags[user_id] = True
 
-    await state.update_data(user_msg=message.message_id)
+    await state.update_data(user_msg_id=message.message_id)
 
     if not message.content_type in media_types and not message.text:
         result = await message.answer(txt.admin.advertisement_add)
         await state.update_data(menu_id=result.message_id)
-        user_locks.remove(message.from_user.id)
-        lock.release()
         return
 
     await state.set_state(AddAdvertisement.adding)
@@ -115,7 +116,7 @@ async def add_advertisement(message: Message, state: FSMContext):
             entities=message.entities,
             reply_markup=kb.admin.inline.advertisements_add_proof
         )
-        await state.update_data(text=res.text, entities=res.entities, inline=res.message_id, mode="text",
+        await state.update_data(text=res.text, entities=res.entities, inline_id=res.message_id, mode="text",
                                 menu_id=result.message_id)
 
     elif message.photo:
@@ -126,7 +127,7 @@ async def add_advertisement(message: Message, state: FSMContext):
             reply_markup=kb.admin.inline.advertisements_add_proof,
         )
         await state.update_data(text=res.caption, entities=res.caption_entities, file_id=res.photo[-1].file_id,
-                                inline=res.message_id, mode="photo", menu_id=result.message_id)
+                                inline_id=res.message_id, mode="photo", menu_id=result.message_id)
 
     elif message.video:
         res = await message.answer_video(
@@ -136,7 +137,7 @@ async def add_advertisement(message: Message, state: FSMContext):
             reply_markup=kb.admin.inline.advertisements_add_proof
         )
         await state.update_data(text=res.caption, entities=res.caption_entities, file_id=res.video.file_id,
-                                inline=res.message_id, mode="video", menu_id=result.message_id)
+                                inline_id=res.message_id, mode="video", menu_id=result.message_id)
 
     elif message.document:
         res = await message.answer_document(
@@ -146,7 +147,7 @@ async def add_advertisement(message: Message, state: FSMContext):
             reply_markup=kb.admin.inline.advertisements_add_proof
         )
         await state.update_data(text=res.caption, entities=res.caption_entities, file_id=res.document.file_id,
-                                inline=res.message_id, mode="document", menu_id=result.message_id)
+                                inline_id=res.message_id, mode="document", menu_id=result.message_id)
 
     elif message.audio:
         res = await message.answer_audio(
@@ -156,7 +157,7 @@ async def add_advertisement(message: Message, state: FSMContext):
             reply_markup=kb.admin.inline.advertisements_add_proof
         )
         await state.update_data(text=res.caption, entities=res.caption_entities, file_id=res.audio.file_id,
-                                inline=res.message_id, mode="audio", menu_id=result.message_id)
+                                inline_id=res.message_id, mode="audio", menu_id=result.message_id)
 
     elif message.voice:
         res = await message.answer_voice(
@@ -166,14 +167,14 @@ async def add_advertisement(message: Message, state: FSMContext):
             reply_markup=kb.admin.inline.advertisements_add_proof
         )
         await state.update_data(text=res.caption, entities=res.caption_entities, file_id=res.voice.file_id,
-                                inline=res.message_id, mode="voice", menu_id=result.message_id)
+                                inline_id=res.message_id, mode="voice", menu_id=result.message_id)
 
     elif message.video_note:
         res = await message.answer_video_note(
             video_note=message.video_note.file_id,
             reply_markup=kb.admin.inline.advertisements_add_proof
         )
-        await state.update_data(file_id=res.video_note.file_id, inline=res.message_id, mode="video_note",
+        await state.update_data(file_id=res.video_note.file_id, inline_id=res.message_id, mode="video_note",
                                 menu_id=result.message_id)
 
     elif message.sticker:
@@ -181,7 +182,7 @@ async def add_advertisement(message: Message, state: FSMContext):
             sticker=message.sticker.file_id,
             reply_markup=kb.admin.inline.advertisements_add_proof
         )
-        await state.update_data(file_id=res.sticker.file_id, inline=res.message_id, mode="sticker",
+        await state.update_data(file_id=res.sticker.file_id, inline_id=res.message_id, mode="sticker",
                                 menu_id=result.message_id)
 
     elif message.animation:
@@ -189,8 +190,9 @@ async def add_advertisement(message: Message, state: FSMContext):
             animation=message.animation.file_id,
             reply_markup=kb.admin.inline.advertisements_add_proof
         )
-        await state.update_data(file_id=res.animation.file_id, inline=res.message_id, mode="animation",
+        await state.update_data(file_id=res.animation.file_id, inline_id=res.message_id, mode="animation",
                                 menu_id=result.message_id)
 
-    # user_locks.remove(message.from_user.id)
-    lock.release()
+    await sleep(0.1)
+    async with lock:
+        user_busy_flags[user_id] = False

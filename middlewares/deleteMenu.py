@@ -16,19 +16,37 @@ class DeleteMenuMiddleware(BaseMiddleware):
         try:
             if res == DeleteMenu.menu_id:
                 bot = data.get("bot")
-                await bot.delete_message(event.chat.id, (await state.get_data()).get('menu_id'))
+
+                menu_id = (await state.get_data()).get('menu_id')
+                if menu_id:
+                    await bot.delete_message(event.chat.id, menu_id)
                 await state.clear()
 
             elif res == AddAdvertisement.menu_id:
                 bot = data.get("bot")
-                await bot.delete_message(event.chat.id, (await state.get_data()).get('menu_id'))
 
-                user_msg = (await state.get_data()).get('user_msg')
-                if user_msg:
-                    await bot.delete_message(event.chat.id, user_msg)
+                menu_id = (await state.get_data()).get('menu_id')
+                if menu_id:
+                    await bot.delete_message(event.chat.id, menu_id)
+
+                user_msg_id = (await state.get_data()).get('user_msg_id')
+                if user_msg_id:
+                    await bot.delete_message(event.chat.id, user_msg_id)
 
             elif res == AddAdvertisement.adding:
-                pass
+                bot = data.get("bot")
+
+                menu_id = (await state.get_data()).get('menu_id')
+                if menu_id:
+                    await bot.delete_message(event.chat.id, menu_id)
+
+                user_msg_id = (await state.get_data()).get('user_msg_id')
+                if user_msg_id:
+                    await bot.delete_message(event.chat.id, user_msg_id)
+
+                inline_id = (await state.get_data()).get('inline_id')
+                if inline_id:
+                    await bot.delete_message(event.chat.id, inline_id)
 
         except Exception as e:
             print(e)

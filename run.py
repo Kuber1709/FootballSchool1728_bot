@@ -10,7 +10,6 @@ from database.models import async_main
 bot = Bot(token=Config.BOT_TOKEN)
 dp = Dispatcher()
 
-
 async def main():
     await async_main()
     dp.include_router(router)
