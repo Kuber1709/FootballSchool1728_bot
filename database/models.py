@@ -1,4 +1,6 @@
-from sqlalchemy import BigInteger
+from datetime import datetime, timezone, timedelta
+
+from sqlalchemy import BigInteger, DateTime
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -18,6 +20,23 @@ class User(Base):
     tg_id: Mapped[int] = mapped_column(BigInteger)
     is_admin: Mapped[bool] = mapped_column(default=False)
     pushing: Mapped[bool] = mapped_column(default=True)
+
+
+class Advertisement(Base):
+    __tablename__ = 'advertisements'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    text: Mapped[str] = mapped_column(nullable=False)
+    dt: Mapped[DateTime] = mapped_column(DateTime(timezone=True),
+                                         default=lambda: datetime.now(timezone(timedelta(hours=10), name="KHV")))
+
+
+class Information(Base):
+    __tablename__ = 'information'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    head: Mapped[str] = mapped_column(nullable=False)
+    text: Mapped[str] = mapped_column(nullable=False)
 
 
 async def async_main():
