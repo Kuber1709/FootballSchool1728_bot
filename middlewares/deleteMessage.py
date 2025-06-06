@@ -4,13 +4,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message
 
 class DeleteMessageMiddleware(BaseMiddleware):
-    def __init__(self):
-        self.flag = False
-
-    async def __call__(self,
-                       handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-                       event: Message,
-                       data: Dict[str, Any]) -> Any:
+    async def __call__(self, handler, event: Message, data):
         result = await handler(event, data)
 
         if not result is None:
