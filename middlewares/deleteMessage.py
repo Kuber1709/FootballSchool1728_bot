@@ -1,13 +1,16 @@
-from typing import Callable, Dict, Any, Awaitable
-
 from aiogram import BaseMiddleware
-from aiogram.types import Message
+from aiogram.types import TelegramObject, Message, CallbackQuery
+
 
 class DeleteMessageMiddleware(BaseMiddleware):
-    async def __call__(self, handler, event: Message, data):
+    async def __call__(self, handler, event: TelegramObject, data):
         result = await handler(event, data)
 
         if not result is None:
-            await event.delete()
+            if isinstance(event, Message):
+                await event.delete()
+
+            elif isinstance(event, CallbackQuery):
+                await event.message.delete()
 
         return result

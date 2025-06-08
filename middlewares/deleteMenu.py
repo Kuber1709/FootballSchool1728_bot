@@ -1,17 +1,18 @@
 from aiogram import BaseMiddleware
-from aiogram.types import Message
+from aiogram.types import TelegramObject, CallbackQuery
 
 from states import DeleteMenu, AddAdvertisement
 
 
 class DeleteMenuMiddleware(BaseMiddleware):
-    async def __call__(self, handler, event: Message, data):
+    async def __call__(self, handler, event: TelegramObject, data):
         state = data.get("state")
         res = await state.get_state()
         messages_id = []
 
         if res == DeleteMenu.menu_id:
             messages_id.append((await state.get_data()).get('menu_id'))
+            messages_id.append((await state.get_data()).get('inline_id'))
 
         elif res == AddAdvertisement.menu_id:
             messages_id.append((await state.get_data()).get('menu_id'))
@@ -26,7 +27,7 @@ class DeleteMenuMiddleware(BaseMiddleware):
         for msg_id in messages_id:
             if msg_id:
                 try:
-                    await bot.delete_message(event.chat.id, msg_id)
+                    await bot.delete_message(event.from_user.id, msg_id)
                 except:
                     pass
 

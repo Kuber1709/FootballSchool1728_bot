@@ -9,7 +9,7 @@ from filters import CallbackPrefixFilter
 user_callback_router = Router()
 
 
-@user_callback_router.callback_query(CallbackPrefixFilter("advertisements"))
+@user_callback_router.callback_query(CallbackPrefixFilter("advertisements_back"))
 async def advertisements(callback_query: CallbackQuery):
     mode, number = callback_query.data.split("_")[1:]
     count = await rq.cnt_advertisements()

@@ -17,16 +17,18 @@ class User(Base):
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    tg_id: Mapped[int] = mapped_column(BigInteger)
+    tg_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     is_admin: Mapped[bool] = mapped_column(default=False)
-    pushing: Mapped[bool] = mapped_column(default=True)
 
 
 class Advertisement(Base):
     __tablename__ = 'advertisements'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    text: Mapped[str] = mapped_column(nullable=False)
+    text: Mapped[str] = mapped_column(nullable=True)
+    entities: Mapped[str] = mapped_column(nullable=True)
+    file_id: Mapped[str] = mapped_column(nullable=True)
+    mode: Mapped[str] = mapped_column(nullable=False)
     dt: Mapped[DateTime] = mapped_column(DateTime(timezone=True),
                                          default=lambda: datetime.now(timezone(timedelta(hours=10), name="KHV")))
 
@@ -37,6 +39,9 @@ class Information(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     head: Mapped[str] = mapped_column(nullable=False)
     text: Mapped[str] = mapped_column(nullable=False)
+    entities: Mapped[str] = mapped_column(nullable=True)
+    file_id: Mapped[str] = mapped_column(nullable=True)
+    mode: Mapped[str] = mapped_column(nullable=False)
 
 
 async def async_main():

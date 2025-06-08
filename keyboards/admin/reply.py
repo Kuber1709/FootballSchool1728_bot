@@ -16,7 +16,7 @@ main = ReplyKeyboardMarkup(keyboard=[
     ]
 ], resize_keyboard=True, input_field_placeholder="Выберите пункт меню")
 
-advertisements = ReplyKeyboardMarkup(keyboard=[
+advertisements_back = ReplyKeyboardMarkup(keyboard=[
     [
       KeyboardButton(text="Создать объявление 📢")
     ],
@@ -25,7 +25,7 @@ advertisements = ReplyKeyboardMarkup(keyboard=[
     ]
 ], resize_keyboard=True)
 
-undo = ReplyKeyboardMarkup(keyboard=[
+advertisements_undo = ReplyKeyboardMarkup(keyboard=[
     [
         KeyboardButton(text="Отмена 🚫")
     ]

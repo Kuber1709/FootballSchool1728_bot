@@ -4,8 +4,8 @@ from database import requests as rq
 
 advertisements_add_proof = InlineKeyboardMarkup(inline_keyboard=[
     [
-        InlineKeyboardButton(text="❌", callback_data=f"advertisements_add_no"),
-        InlineKeyboardButton(text="✅", callback_data=f"advertisements_add_yes")
+        InlineKeyboardButton(text="❌", callback_data=f"advertisements_add-no_0"),
+        InlineKeyboardButton(text="✅", callback_data=f"advertisements_add-yes_0")
     ]
 ])
 
@@ -16,9 +16,9 @@ async def advertisements(number: int):
 
     if not count == 1:
         if not number == 1:
-            buttons.append(InlineKeyboardButton(text="⬅", callback_data="advertisements_left_" + str(number)))
+            buttons.append(InlineKeyboardButton(text="⬅", callback_data=f"advertisements_left_{number}"))
         if not number == count:
-            buttons.append(InlineKeyboardButton(text="➡", callback_data="advertisements_right_" + str(number)))
+            buttons.append(InlineKeyboardButton(text="➡", callback_data=f"advertisements_right_{number}"))
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         buttons,
@@ -29,16 +29,16 @@ async def advertisements(number: int):
     return kb
 
 
-async def advertisements_del_proof(number: int):
+def advertisements_del_proof(number: int):
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="❌", callback_data=f"advertisements_no_{number}"),
-            InlineKeyboardButton(text="✅", callback_data=f"advertisements_yes_{number}")
+            InlineKeyboardButton(text="❌", callback_data=f"advertisements_del-no_{number}"),
+            InlineKeyboardButton(text="✅", callback_data=f"advertisements_del-yes_{number}")
         ]
     ])
 
 
-async def advertisements_back(number: int):
+def advertisements_ready(number: int = 0):
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="Готово", callback_data=f"advertisements_ready_{number}")
