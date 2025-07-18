@@ -1,11 +1,30 @@
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, CallbackQuery
 
-from states import DeleteMenu, AddAdvertisement
+from states import (DeleteMenu, AddAdvertisement, AddInformation, AddGroup, AddCoach, AddExercise, AddWorkout,
+                    EditPassword, EditSchedule)
 
+state_data = [AddAdvertisement.text, AddInformation.head, AddInformation.text, AddGroup.name, AddCoach.name,
+              AddExercise.head, AddExercise.text, AddWorkout.group_id, AddWorkout.exercise_id, AddWorkout.method,
+              EditPassword.password, EditPassword.new_password, EditSchedule.menu_id]
+state_inline = [AddAdvertisement.inline_id, AddInformation.inline_id, AddGroup.inline_id, AddCoach.inline_id,
+                AddExercise.inline_id, AddWorkout.inline_id, EditPassword.inline_id]
 
 class DeleteMenuMiddleware(BaseMiddleware):
     async def __call__(self, handler, event: TelegramObject, data):
+        if isinstance(event, CallbackQuery):
+            if all(el in ["left", "right", "information"] for el in event.data.split("_")[:2]):
+                return await handler(event, data)
+
+            elif all(el in ["left", "right", "exercises"] for el in event.data.split("_")[:2]):
+                return await handler(event, data)
+
+            elif event.data.split("_")[0] == "workouts" and event.data.split("_")[1] in ["groups", "exercises"]:
+                return await handler(event, data)
+
+            elif event.data.split("_")[0] == "schedule":
+                return await handler(event, data)
+
         state = data.get("state")
         res = await state.get_state()
         messages_id = []
@@ -14,14 +33,14 @@ class DeleteMenuMiddleware(BaseMiddleware):
             messages_id.append((await state.get_data()).get('menu_id'))
             messages_id.append((await state.get_data()).get('inline_id'))
 
-        elif res == AddAdvertisement.menu_id:
+        elif res in state_data:
             messages_id.append((await state.get_data()).get('menu_id'))
             messages_id.append((await state.get_data()).get('user_msg_id'))
 
-        elif res == AddAdvertisement.adding:
+        elif res in state_inline:
             messages_id.append((await state.get_data()).get('menu_id'))
-            messages_id.append((await state.get_data()).get('user_msg_id'))
             messages_id.append((await state.get_data()).get('inline_id'))
+            messages_id.append((await state.get_data()).get('user_msg_id'))
 
         bot = data.get("bot")
         for msg_id in messages_id:

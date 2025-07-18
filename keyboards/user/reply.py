@@ -6,7 +6,7 @@ main = ReplyKeyboardMarkup(keyboard=[
         KeyboardButton(text="Расписание 🔔")
     ],
     [
-        KeyboardButton(text="Тренировки 🏃")
+        KeyboardButton(text="Домашние тренировки 🏃")
     ],
     [
         KeyboardButton(text="Информация ℹ")
@@ -17,4 +17,4 @@ back = ReplyKeyboardMarkup(keyboard=[
     [
         KeyboardButton(text="Назад 🔙")
     ]
-], resize_keyboard=True, input_field_placeholder="Выберите пункт меню")
+], resize_keyboard=True)
