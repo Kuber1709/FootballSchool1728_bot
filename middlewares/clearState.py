@@ -2,7 +2,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message
 
 from states import (DeleteMenu, AddAdvertisement, AddInformation, AddGroup, AddCoach, AddExercise, AddWorkout,
-                    EditPassword)
+                    EditPassword, AddAdmin)
 
 
 class ClearStateMiddleware(BaseMiddleware):
@@ -50,6 +50,9 @@ class ClearStateMiddleware(BaseMiddleware):
             await state.clear()
 
         elif result == EditPassword.new_password and not handler_name == "admins_edit_password_new":
+            await state.clear()
+
+        elif result == AddAdmin.name and not handler_name == "admins_add_name":
             await state.clear()
 
         return await handler(event, data)

@@ -1,3 +1,4 @@
+from .addAdmin import AddAdmin
 from .addAdvertisement import AddAdvertisement
 from .addCoach import AddCoach
 from .addExercise import AddExercise

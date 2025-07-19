@@ -71,7 +71,7 @@ async def advertisements(callback_query: CallbackQuery, state: FSMContext):
         count = await rq.cnt_advertisements()
 
         if not count:
-            result = await callback_query.message.answer(txt.admin.no_advertisements)
+            result = await callback_query.message.answer(txt.shared.no_advertisements)
 
         elif mode == "delete":
             result = await callback_query.message.answer(txt.admin.advertisements_del_proof)
@@ -140,12 +140,12 @@ async def information(callback_query: CallbackQuery, state: FSMContext):
         count = await rq.cnt_information()
 
         if not count:
-            result = await callback_query.message.answer(txt.admin.no_information)
+            result = await callback_query.message.answer(txt.shared.no_information)
 
         elif mode in ["ready", "back"]:
             page = 1 if page < 1 else min(page, (count + 4) // 5)
-            result = await callback_query.message.answer(txt.admin.information_heads,
-                                                         reply_markup=await kb.admin.inline.information_page(page))
+            result = await callback_query.message.answer(txt.shared.information_heads,
+                                                         reply_markup=await kb.shared.inline.information_page(page))
 
         elif mode in ["show", "delete", "del-no"]:
             result, result_inline = await information_show(callback_query.message, page, int(data[2]), mode == "delete")
@@ -158,8 +158,8 @@ async def information(callback_query: CallbackQuery, state: FSMContext):
             elif mode == "right":
                 page = min(page + 1, (count + 4) // 5) if page > 0 else 1
 
-            result = await callback_query.message.edit_text(txt.admin.information_heads,
-                                                            reply_markup=await kb.admin.inline.information_page(page))
+            result = await callback_query.message.edit_text(txt.shared.information_heads,
+                                                            reply_markup=await kb.shared.inline.information_page(page))
 
     await state.update_data(menu_id=result.message_id)
 
@@ -211,7 +211,7 @@ async def groups(callback_query: CallbackQuery, state: FSMContext):
     elif mode == "edit":
         await state.set_state(AddGroup.name)
 
-        result = await callback_query.message.answer(txt.admin.groups_add_name, reply_markup=kb.admin.reply.undo)
+        result = await callback_query.message.answer(txt.admin.groups_add_name, reply_markup=kb.shared.reply.undo)
 
         await state.update_data(menu_id=result.message_id, edit_group_id=group_id)
 
@@ -228,11 +228,11 @@ async def groups(callback_query: CallbackQuery, state: FSMContext):
         count = await rq.cnt_groups()
 
         if not count:
-            result = await callback_query.message.answer(txt.admin.no_groups)
+            result = await callback_query.message.answer(txt.shared.no_groups)
 
         elif mode in ["ready", "back"]:
-            result = await callback_query.message.answer(txt.admin.groups_names,
-                                                         reply_markup=await kb.admin.inline.groups_page())
+            result = await callback_query.message.answer(txt.shared.groups_names,
+                                                         reply_markup=await kb.shared.inline.groups_page())
 
         elif mode == "delete":
             result = await callback_query.message.answer(txt.admin.groups_del_proof)
@@ -296,7 +296,7 @@ async def coaches(callback_query: CallbackQuery, state: FSMContext):
     elif mode == "edit":
         await state.set_state(AddCoach.name)
 
-        result = await callback_query.message.answer(txt.admin.coaches_add_name, reply_markup=kb.admin.reply.undo)
+        result = await callback_query.message.answer(txt.admin.coaches_add_name, reply_markup=kb.shared.reply.undo)
 
         await state.update_data(menu_id=result.message_id, edit_coach_id=coach_id)
 
@@ -461,7 +461,7 @@ async def workouts(callback_query: CallbackQuery, state: FSMContext):
 
         else:
             result = await callback_query.message.answer(txt.admin.workouts_groups_names,
-                                                         reply_markup=await kb.admin.inline.groups_page(
+                                                         reply_markup=await kb.shared.inline.groups_page(
                                                              "workouts_groups"))
 
         await state.update_data(menu_id=result.message_id)
@@ -478,11 +478,11 @@ async def workouts(callback_query: CallbackQuery, state: FSMContext):
             await callback_query.message.answer(txt.admin.workouts_add_error, reply_markup=kb.admin.reply.workouts_back)
 
             if not count:
-                result = await callback_query.message.answer(txt.admin.no_groups)
+                result = await callback_query.message.answer(txt.shared.no_groups)
 
             else:
-                result = await callback_query.message.answer(txt.admin.groups_names,
-                                                             reply_markup=await kb.admin.inline.groups_page(
+                result = await callback_query.message.answer(txt.shared.groups_names,
+                                                             reply_markup=await kb.shared.inline.groups_page(
                                                                  "workouts_groups"))
 
         else:
@@ -508,11 +508,11 @@ async def workouts(callback_query: CallbackQuery, state: FSMContext):
             count = await rq.cnt_groups()
 
             if not count:
-                result = await callback_query.message.answer(txt.admin.no_groups)
+                result = await callback_query.message.answer(txt.shared.no_groups)
 
             else:
-                result = await callback_query.message.answer(txt.admin.groups_names,
-                                                             reply_markup=await kb.admin.inline.groups_page(
+                result = await callback_query.message.answer(txt.shared.groups_names,
+                                                             reply_markup=await kb.shared.inline.groups_page(
                                                                  "workouts"))
 
         else:
@@ -531,11 +531,11 @@ async def workouts(callback_query: CallbackQuery, state: FSMContext):
         count = await rq.cnt_groups()
 
         if not count:
-            result = await callback_query.message.answer(txt.admin.no_groups)
+            result = await callback_query.message.answer(txt.shared.no_groups)
 
         else:
-            result = await callback_query.message.answer(txt.admin.groups_names,
-                                                         reply_markup=await kb.admin.inline.groups_page("workouts"))
+            result = await callback_query.message.answer(txt.shared.groups_names,
+                                                         reply_markup=await kb.shared.inline.groups_page("workouts"))
 
         await state.update_data(menu_id=result.message_id)
 
@@ -555,8 +555,8 @@ async def workouts(callback_query: CallbackQuery, state: FSMContext):
         count = await rq.cnt_workouts(group_id=group_id)
 
         if not count:
-            result = await callback_query.message.answer(txt.admin.no_workouts,
-                                                         reply_markup=kb.admin.inline.back("workouts"))
+            result = await callback_query.message.answer(txt.shared.no_workouts,
+                                                         reply_markup=kb.shared.inline.back("workouts"))
 
         else:
             if mode == "left":
@@ -633,7 +633,7 @@ async def admins(callback_query: CallbackQuery, state: FSMContext):
 
             if count == 1:
                 result = await callback_query.message.answer(txt.admin.admins_del_error,
-                                                             reply_markup=await kb.admin.inline.back(
+                                                             reply_markup=kb.shared.inline.back(
                                                                  "admins", admin_id))
 
             else:
@@ -656,7 +656,7 @@ async def schedule(callback_query: CallbackQuery, state: FSMContext):
 
     if len(data) == 2:
         if category == "groups":
-            result = await callback_query.message.edit_text(txt.admin.groups_names,
+            result = await callback_query.message.edit_text(txt.shared.groups_names,
                                                             reply_markup=await kb.admin.inline.schedule_groups_page(
                                                                 mode
                                                             ))
@@ -694,7 +694,7 @@ async def schedule(callback_query: CallbackQuery, state: FSMContext):
 
         if day == "back":
             if category == "groups":
-                result = await callback_query.message.edit_text(txt.admin.groups_names,
+                result = await callback_query.message.edit_text(txt.shared.groups_names,
                                                                 reply_markup=await kb.admin.inline.schedule_groups_page(
                                                                     mode
                                                                 ))
@@ -738,10 +738,10 @@ async def schedule(callback_query: CallbackQuery, state: FSMContext):
                 else:
                     lessons = await rq.get_lessons(day, coach_id=int(target))
 
-
             if category == "coaches":
                 coach_name_data = (await rq.get_coach(int(target))).split()
-                title = "*" + coach_name_data[0] + " " + coach_name_data[1][0] + "." + coach_name_data[2][0] + ".*\n" + title
+                title = "*" + coach_name_data[0] + " " + coach_name_data[1][0] + "." + coach_name_data[2][
+                    0] + ".*\n" + title
 
             else:
                 title = "*" + await rq.get_group(int(target)) + "*\n" + title
@@ -794,7 +794,6 @@ async def schedule(callback_query: CallbackQuery, state: FSMContext):
 
             elif mode == "edit":
                 pass
-
 
     await state.update_data(menu_id=result.message_id)
 

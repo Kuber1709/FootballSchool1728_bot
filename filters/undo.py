@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from states import (AddAdvertisement, AddInformation, AddGroup, AddCoach, AddExercise, AddWorkout, EditPassword,
-                    EditSchedule)
+                    EditSchedule, AddAdmin)
 
 advertisements = [AddAdvertisement.text, AddAdvertisement.inline_id]
 information = [AddInformation.head, AddInformation.text, AddInformation.inline_id]
@@ -11,7 +11,7 @@ groups = [AddGroup.name, AddGroup.inline_id]
 coaches = [AddCoach.name, AddCoach.inline_id]
 exercises = [AddExercise.head, AddExercise.text, AddExercise.inline_id]
 workouts = [AddWorkout.group_id, AddWorkout.exercise_id, AddWorkout.method, AddWorkout.inline_id]
-admins = [EditPassword.password, EditPassword.new_password, EditPassword.inline_id]
+admins = [EditPassword.password, EditPassword.new_password, EditPassword.inline_id, AddAdmin.name, AddAdmin.inline_id]
 schedule = [EditSchedule.menu_id]
 
 

@@ -12,7 +12,7 @@ from database import requests as rq
 from filters import UndoFilter
 from states import (DeleteMenu, AddAdvertisement, AddInformation, AddGroup, AddCoach, AddExercise, AddWorkout,
                     EditPassword, EditSchedule)
-from ..shared import advertisements_show
+from .shared import advertisements_show
 
 admin_messages_router = Router()
 
@@ -75,7 +75,7 @@ async def advertisements(message: Message, state: FSMContext):
 async def advertisements_create(message: Message, state: FSMContext):
     await state.set_state(AddAdvertisement.text)
 
-    await message.answer(message.text, reply_markup=kb.admin.reply.undo)
+    await message.answer(message.text, reply_markup=kb.shared.reply.undo)
     result = await message.answer(txt.admin.advertisements_add)
 
     await state.update_data(menu_id=result.message_id)
@@ -89,11 +89,11 @@ async def information(message: Message, state: FSMContext):
     await message.answer(message.text, reply_markup=kb.admin.reply.information_back)
 
     if not count:
-        result = await message.answer(txt.admin.no_information)
+        result = await message.answer(txt.shared.no_information)
 
     else:
-        result = await message.answer(txt.admin.information_heads,
-                                      reply_markup=await kb.admin.inline.information_page())
+        result = await message.answer(txt.shared.information_heads,
+                                      reply_markup=await kb.shared.inline.information_page())
 
     await state.update_data(menu_id=result.message_id)
 
@@ -102,7 +102,7 @@ async def information(message: Message, state: FSMContext):
 async def information_add(message: Message, state: FSMContext):
     await state.set_state(AddInformation.head)
 
-    await message.answer(message.text, reply_markup=kb.admin.reply.undo)
+    await message.answer(message.text, reply_markup=kb.shared.reply.undo)
     result = await message.answer(txt.admin.information_add_head)
 
     await state.update_data(menu_id=result.message_id)
@@ -121,10 +121,10 @@ async def groups(message: Message, state: FSMContext):
         result = await message.answer(text=await rq.get_group(group_id), reply_markup=kb.admin.inline.group(group_id))
 
     elif not count:
-        result = await message.answer(txt.admin.no_groups)
+        result = await message.answer(txt.shared.no_groups)
 
     else:
-        result = await message.answer(txt.admin.groups_names, reply_markup=await kb.admin.inline.groups_page())
+        result = await message.answer(txt.shared.groups_names, reply_markup=await kb.shared.inline.groups_page())
 
     await state.update_data(menu_id=result.message_id)
 
@@ -133,7 +133,7 @@ async def groups(message: Message, state: FSMContext):
 async def groups_add(message: Message, state: FSMContext):
     await state.set_state(AddGroup.name)
 
-    await message.answer(message.text, reply_markup=kb.admin.reply.undo)
+    await message.answer(message.text, reply_markup=kb.shared.reply.undo)
     result = await message.answer(txt.admin.groups_add_name)
 
     await state.update_data(menu_id=result.message_id)
@@ -164,7 +164,7 @@ async def coaches(message: Message, state: FSMContext):
 async def coaches_add(message: Message, state: FSMContext):
     await state.set_state(AddCoach.name)
 
-    await message.answer(message.text, reply_markup=kb.admin.reply.undo)
+    await message.answer(message.text, reply_markup=kb.shared.reply.undo)
     result = await message.answer(txt.admin.coaches_add_name)
 
     await state.update_data(menu_id=result.message_id)
@@ -178,11 +178,11 @@ async def workouts(message: Message, state: FSMContext):
     await message.answer(message.text, reply_markup=kb.admin.reply.workouts_back)
 
     if not count:
-        result = await message.answer(txt.admin.no_groups)
+        result = await message.answer(txt.shared.no_groups)
 
     else:
-        result = await message.answer(txt.admin.groups_names,
-                                      reply_markup=await kb.admin.inline.groups_page("workouts"))
+        result = await message.answer(txt.shared.groups_names,
+                                      reply_markup=await kb.shared.inline.groups_page("workouts"))
 
     await state.update_data(menu_id=result.message_id)
 
@@ -193,7 +193,7 @@ async def workouts_add(message: Message, state: FSMContext):
     count_groups = await rq.cnt_groups()
     count_exercises = await rq.cnt_exercises()
 
-    await message.answer(message.text, reply_markup=kb.admin.reply.undo)
+    await message.answer(message.text, reply_markup=kb.shared.reply.undo)
 
     if not count_groups:
         result = await message.answer(txt.admin.workouts_no_groups)
@@ -203,7 +203,7 @@ async def workouts_add(message: Message, state: FSMContext):
 
     else:
         result = await message.answer(txt.admin.workouts_groups_names,
-                                      reply_markup=await kb.admin.inline.groups_page("workouts_groups"))
+                                      reply_markup=await kb.shared.inline.groups_page("workouts_groups"))
 
     await state.update_data(menu_id=result.message_id)
 
@@ -228,7 +228,7 @@ async def exercises(message: Message, state: FSMContext):
 async def exercises_add(message: Message, state: FSMContext):
     await state.set_state(AddExercise.head)
 
-    await message.answer(message.text, reply_markup=kb.admin.reply.undo)
+    await message.answer(message.text, reply_markup=kb.shared.reply.undo)
     result = await message.answer(txt.admin.exercises_add_head)
 
     await state.update_data(menu_id=result.message_id)
@@ -249,7 +249,7 @@ async def admins(message: Message, state: FSMContext):
 async def admins_add(message: Message, state: FSMContext):
     await state.set_state(EditPassword.password)
 
-    await message.answer(message.text, reply_markup=kb.admin.reply.undo)
+    await message.answer(message.text, reply_markup=kb.shared.reply.undo)
     result = await message.answer(txt.admin.admins_edit_password)
 
     await state.update_data(menu_id=result.message_id)
@@ -270,7 +270,7 @@ async def schedule(message: Message, state: FSMContext):
 async def schedule_edit(message: Message, state: FSMContext):
     await state.set_state(EditSchedule.menu_id)
 
-    await message.answer(message.text, reply_markup=kb.admin.reply.undo)
+    await message.answer(message.text, reply_markup=kb.shared.reply.undo)
 
     result = await message.answer(txt.admin.schedule_category, reply_markup=kb.admin.inline.schedule_category("edit"))
 
@@ -403,11 +403,11 @@ async def workouts_add_method(message: Message, state: FSMContext):
             await message.answer(txt.admin.workouts_add_error, reply_markup=kb.admin.reply.workouts_back)
 
             if not count:
-                result = await message.answer(txt.admin.no_groups)
+                result = await message.answer(txt.shared.no_groups)
 
             else:
-                result = await message.answer(txt.admin.groups_names,
-                                              reply_markup=await kb.admin.inline.groups_page("workouts_groups"))
+                result = await message.answer(txt.shared.groups_names,
+                                              reply_markup=await kb.shared.inline.groups_page("workouts_groups"))
 
         else:
             await state.set_state(AddWorkout.inline_id)
