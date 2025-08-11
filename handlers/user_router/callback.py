@@ -129,6 +129,10 @@ async def admins(callback_query: CallbackQuery, state: FSMContext):
 
         result = await callback_query.message.answer(txt.user.admins_add_name)
 
+    elif mode == "ready":
+        await state.clear()
+        result = await callback_query.message.answer(txt.shared.menu, reply_markup=kb.user.reply.main)
+
     else:
         data = await state.get_data()
         await rq.add_admin(callback_query.from_user.id, data.get("name"))

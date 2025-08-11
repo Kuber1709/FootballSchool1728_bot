@@ -10,6 +10,7 @@ state_data = [AddAdvertisement.text, AddInformation.head, AddInformation.text, A
 state_inline = [AddAdvertisement.inline_id, AddInformation.inline_id, AddGroup.inline_id, AddCoach.inline_id,
                 AddExercise.inline_id, AddWorkout.inline_id, EditPassword.inline_id, AddAdmin.inline_id]
 
+
 class DeleteMenuMiddleware(BaseMiddleware):
     async def __call__(self, handler, event: TelegramObject, data):
         if isinstance(event, CallbackQuery):

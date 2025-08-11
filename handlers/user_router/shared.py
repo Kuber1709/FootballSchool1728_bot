@@ -5,6 +5,7 @@ import texts as txt
 from database import requests as rq
 from ..shared import json_to_entities, show
 
+
 async def advertisements_show(message: Message, number: int = 1):
     text, json_entities, file_id, mode, dt = await rq.get_advertisement(number)
 
@@ -32,7 +33,7 @@ async def information_show(message: Message, page: int, number: int):
     return await message.answer(head), await show(message, text, entities, file_id, mode, inline)
 
 
-async def workouts_show(message: Message, number: int, group_id: int,):
+async def workouts_show(message: Message, number: int, group_id: int, ):
     group_name, exercise, method = await rq.get_workout(group_id, number)
 
     text = exercise[1]

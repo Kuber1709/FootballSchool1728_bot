@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ph = PasswordHasher()
 

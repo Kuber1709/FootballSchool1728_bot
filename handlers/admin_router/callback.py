@@ -578,7 +578,7 @@ async def admins(callback_query: CallbackQuery, state: FSMContext):
     if mode == "password-edit-no":
         await state.set_state(EditPassword.password)
 
-        result = await callback_query.message.answer(txt.admin.admins_edit_password_proof)
+        result = await callback_query.message.answer(txt.admin.admins_edit_password)
 
     elif mode == "password-edit-yes":
         data = await state.get_data()

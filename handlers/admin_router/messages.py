@@ -1,6 +1,6 @@
 import json
-from re import fullmatch
 from datetime import datetime
+from re import fullmatch
 
 from aiogram import Router, F
 from aiogram.filters import CommandStart, Command, StateFilter, or_f
@@ -56,7 +56,7 @@ async def cmd_admins_password(message: Message, state: FSMContext):
 
 
 @admin_messages_router.message(F.text == "Назад 🔙")
-async def back(message: Message, state: FSMContext):
+async def back(message: Message):
     await message.answer(message.text, reply_markup=kb.admin.reply.main)
 
 
@@ -260,11 +260,11 @@ async def admins_add(message: Message, state: FSMContext):
     await state.update_data(menu_id=result.message_id)
 
 
-@admin_messages_router.message(F.text == "Расписание 🔔")
+@admin_messages_router.message(F.text.in_(["Расписание 🔔", "Закрыть 🔙"]))
 async def schedule(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
 
-    await message.answer(message.text, reply_markup=kb.shared.reply.back)
+    await message.answer(message.text, reply_markup=kb.admin.reply.schedule_back)
 
     result = await message.answer(txt.shared.schedule_category, reply_markup=kb.shared.inline.schedule_category)
 
@@ -334,7 +334,7 @@ async def groups_add_name(message: Message, state: FSMContext):
 
 @admin_messages_router.message(StateFilter(AddCoach.name))
 async def coaches_add_name(message: Message, state: FSMContext):
-    if not message.text:
+    if not message.text or len(message.text.split()) != 3:
         result = await message.answer(txt.admin.coaches_add_name)
 
     else:
@@ -394,7 +394,7 @@ async def workouts_add_method(message: Message, state: FSMContext):
             count = await rq.cnt_groups()
 
             await message.delete()
-            await message.answer(txt.admin.workouts_add_error, reply_markup=kb.admin.reply.workouts_back)
+            await message.answer(txt.admin.add_error, reply_markup=kb.admin.reply.workouts_back)
 
             if not count:
                 result = await message.answer(txt.shared.no_groups)

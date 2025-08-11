@@ -88,9 +88,6 @@ schedule_back = ReplyKeyboardMarkup(keyboard=[
         KeyboardButton(text="Тренеры 👤")
     ],
     [
-        KeyboardButton(text="Изменить расписание 🔔")
-    ],
-    [
         KeyboardButton(text="Назад 🔙"),
     ]
 ], resize_keyboard=True)

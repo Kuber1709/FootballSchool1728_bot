@@ -57,7 +57,7 @@ async def advertisements(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
     count = await rq.cnt_advertisements()
 
-    await message.answer(message.text, reply_markup=kb.shared.reply.back)
+    await message.answer(message.text, reply_markup=kb.user.reply.back)
 
     if not count:
         result = await message.answer(txt.shared.no_advertisements)
@@ -73,7 +73,7 @@ async def information(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
     count = await rq.cnt_information()
 
-    await message.answer(message.text, reply_markup=kb.shared.reply.back)
+    await message.answer(message.text, reply_markup=kb.user.reply.back)
 
     if not count:
         result = await message.answer(txt.shared.no_information)
@@ -90,7 +90,7 @@ async def workouts(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
     count = await rq.cnt_groups()
 
-    await message.answer(message.text, reply_markup=kb.shared.reply.back)
+    await message.answer(message.text, reply_markup=kb.user.reply.back)
 
     if not count:
         result = await message.answer(txt.shared.no_groups)
@@ -106,7 +106,7 @@ async def workouts(message: Message, state: FSMContext):
 async def schedule(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
 
-    await message.answer(message.text, reply_markup=kb.shared.reply.back)
+    await message.answer(message.text, reply_markup=kb.user.reply.back)
 
     result = await message.answer(txt.shared.schedule_category, reply_markup=kb.shared.inline.schedule_category)
 
