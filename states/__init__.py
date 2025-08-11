@@ -4,7 +4,7 @@ from .addCoach import AddCoach
 from .addExercise import AddExercise
 from .addGroup import AddGroup
 from .addInformation import AddInformation
+from .addLesson import AddLesson
 from .addWorkout import AddWorkout
 from .deleteMenu import DeleteMenu
 from .editPassword import EditPassword
-from .editSchedule import EditSchedule

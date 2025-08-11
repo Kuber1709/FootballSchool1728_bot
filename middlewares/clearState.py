@@ -2,7 +2,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message
 
 from states import (DeleteMenu, AddAdvertisement, AddInformation, AddGroup, AddCoach, AddExercise, AddWorkout,
-                    EditPassword, AddAdmin)
+                    EditPassword, AddAdmin, AddLesson)
 
 
 class ClearStateMiddleware(BaseMiddleware):
@@ -53,6 +53,9 @@ class ClearStateMiddleware(BaseMiddleware):
             await state.clear()
 
         elif result == AddAdmin.name and not handler_name == "admins_add_name":
+            await state.clear()
+
+        elif result == AddLesson.time_start and not handler_name == "schedule_add_time":
             await state.clear()
 
         return await handler(event, data)

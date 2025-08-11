@@ -1,6 +1,6 @@
-from datetime import datetime, timezone, timedelta, date, time
+from datetime import datetime, timezone, timedelta, time
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Date, Time
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Time
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -102,8 +102,7 @@ class Lesson(Base):
     __tablename__ = 'lessons'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    date: Mapped[date] = mapped_column(Date, nullable=True, default=None)
-    base_day: Mapped[str] = mapped_column(nullable=True, default=None)
+    weekday: Mapped[str] = mapped_column(nullable=False)
     group_id: Mapped[int] = mapped_column(ForeignKey("groups.id", ondelete="CASCADE"), nullable=False)
     coach_id: Mapped[int] = mapped_column(ForeignKey("coaches.id", ondelete="CASCADE"), nullable=False)
     time_start: Mapped[time] = mapped_column(Time(timezone=True), nullable=False)

@@ -1,4 +1,4 @@
-from datetime import date, timedelta, datetime
+from datetime import datetime
 
 from aiogram import Router, Bot
 from aiogram.fsm.context import FSMContext
@@ -10,20 +10,11 @@ from config import Config
 from database import requests as rq
 from filters import CallbackPrefixFilter
 from states import (AddAdvertisement, DeleteMenu, AddInformation, AddGroup, AddCoach, AddExercise, AddWorkout,
-                    EditPassword)
+                    EditPassword, AddLesson)
 from .shared import json_to_entities, advertisements_show, information_show, exercises_show, workouts_show, admins_show
+from ..shared import weekdays
 
 admin_callback_router = Router()
-
-weekdays = {
-    "monday": "Понедельник",
-    "tuesday": "Вторник",
-    "wednesday": "Среда",
-    "thursday": "Четверг",
-    "friday": "Пятница",
-    "saturday": "Суббота",
-    "sunday": "Воскресенье"
-}
 
 
 @admin_callback_router.callback_query(CallbackPrefixFilter("advertisements"))
@@ -313,10 +304,10 @@ async def coaches(callback_query: CallbackQuery, state: FSMContext):
         count = await rq.cnt_coaches()
 
         if not count:
-            result = await callback_query.message.answer(txt.admin.no_coaches)
+            result = await callback_query.message.answer(txt.shared.no_coaches)
 
         elif mode in ["ready", "back"]:
-            result = await callback_query.message.answer(txt.admin.coaches_names,
+            result = await callback_query.message.answer(txt.shared.coaches_names,
                                                          reply_markup=await kb.admin.inline.coaches_page())
 
         elif mode == "delete":
@@ -475,7 +466,7 @@ async def workouts(callback_query: CallbackQuery, state: FSMContext):
             await state.set_state(DeleteMenu.menu_id)
             count = await rq.cnt_groups()
 
-            await callback_query.message.answer(txt.admin.workouts_add_error, reply_markup=kb.admin.reply.workouts_back)
+            await callback_query.message.answer(txt.admin.add_error, reply_markup=kb.admin.reply.workouts_back)
 
             if not count:
                 result = await callback_query.message.answer(txt.shared.no_groups)
@@ -650,150 +641,290 @@ async def admins(callback_query: CallbackQuery, state: FSMContext):
 @admin_callback_router.callback_query(CallbackPrefixFilter("schedule"))
 async def schedule(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.answer()
+    await state.set_state(DeleteMenu.menu_id)
     data = callback_query.data.split("_")[1:]
-    mode, category = data[0], data[1]
+    category = data[0]
     result = None
 
-    if len(data) == 2:
+    if len(data) == 1 or len(data) == 3 and data[2] == "back":
         if category == "groups":
-            result = await callback_query.message.edit_text(txt.shared.groups_names,
-                                                            reply_markup=await kb.admin.inline.schedule_groups_page(
-                                                                mode
-                                                            ))
+            count = await rq.cnt_groups()
+            text = txt.shared.groups_names if count else txt.shared.no_groups
+
+            result = await callback_query.message.edit_text(text,
+                                                            reply_markup=await kb.shared.inline.schedule_groups_page())
 
         elif category == "coaches":
-            result = await callback_query.message.edit_text(txt.admin.coaches_names,
-                                                            reply_markup=await kb.admin.inline.schedule_coaches_page(
-                                                                mode
-                                                            ))
+            count = await rq.cnt_coaches()
+            text = txt.shared.coaches_names if count else txt.shared.no_coaches
 
-    elif len(data) == 3:
-        target = data[2]
+            result = await callback_query.message.edit_text(text,
+                                                            reply_markup=await kb.shared.inline.schedule_coaches_page())
+
+    elif len(data) == 2 or len(data) == 4 and data[3] == "back":
+        target = data[1]
 
         if target == "back":
-            result = await callback_query.message.edit_text(txt.admin.schedule_category,
-                                                            reply_markup=kb.admin.inline.schedule_category(mode))
-
-        elif mode == "show":
-            today = date.today()
-            week_dates = [today - timedelta(days=today.weekday()) + timedelta(days=i) for i in range(7)]
-
-            result = await callback_query.message.edit_text(txt.admin.schedule_weekdays,
-                                                            reply_markup=kb.admin.inline.schedule_dates(
-                                                                mode, category, target, week_dates
-                                                            ))
-
-        elif mode == "edit":
-            result = await callback_query.message.edit_text(txt.admin.schedule_weekdays,
-                                                            reply_markup=kb.admin.inline.schedule_weekdays(
-                                                                mode, category, target
-                                                            ))
-
-    elif len(data) == 4 or data[4] == "del-no":
-        target, day = data[2], data[3]
-
-        if day == "back":
-            if category == "groups":
-                result = await callback_query.message.edit_text(txt.shared.groups_names,
-                                                                reply_markup=await kb.admin.inline.schedule_groups_page(
-                                                                    mode
-                                                                ))
-
-            else:
-                result = await callback_query.message.edit_text(txt.admin.coaches_names,
-                                                                reply_markup=await kb.admin.inline.schedule_coaches_page(
-                                                                    mode
-                                                                ))
-
-        elif day.startswith("left") or day.startswith("right"):
-            control, day = day.split("-")
-            day = datetime.strptime(day, "%d.%m.%Y").date()
-            day += timedelta(days=1) if control == "right" else timedelta(days=-1)
-            week_dates = [day - timedelta(days=day.weekday()) + timedelta(days=i) for i in range(7)]
-
-            result = await callback_query.message.edit_text(txt.admin.schedule_weekdays,
-                                                            reply_markup=kb.admin.inline.schedule_dates(
-                                                                mode, category, target, week_dates
-                                                            ))
+            result = await callback_query.message.edit_text(txt.shared.schedule_category,
+                                                            reply_markup=kb.shared.inline.schedule_category)
 
         else:
-            title = day
+            result = await callback_query.message.edit_text(txt.shared.schedule_weekdays,
+                                                            reply_markup=kb.shared.inline.schedule_weekdays(
+                                                                category, target
+                                                            ))
 
-            if "." in day:
-                day = datetime.strptime(day, "%d.%m.%Y").date()
-                title = weekdays[day.strftime("%A").lower()] + " " + title + "\n\n"
+    elif len(data) == 3 or len(data) == 5 and data[4] == "back" or len(data) == 7 and data[6] == "add-no" or len(
+            data) == 6 and data[5] == "0":
+        target, weekday = data[1], data[2]
+        lessons = await rq.get_lessons(category, int(target), weekday)
+        text = None
 
-                if category == "groups":
-                    lessons = await rq.get_lessons(day.strftime("%A").lower(), day, group_id=int(target))
+        if category == "groups":
+            text = "*" + await rq.get_group(int(target)) + "*\n" + weekdays[weekday] + "\n\n"
 
-                else:
-                    lessons = await rq.get_lessons(day.strftime("%A").lower(), day, coach_id=int(target))
-
-            else:
-                title = weekdays[day] + "\n\n"
-
-                if category == "groups":
-                    lessons = await rq.get_lessons(day, group_id=int(target))
-
-                else:
-                    lessons = await rq.get_lessons(day, coach_id=int(target))
-
-            if category == "coaches":
-                coach_name_data = (await rq.get_coach(int(target))).split()
-                title = "*" + coach_name_data[0] + " " + coach_name_data[1][0] + "." + coach_name_data[2][
-                    0] + ".*\n" + title
-
-            else:
-                title = "*" + await rq.get_group(int(target)) + "*\n" + title
-
-            texts = []
             for lesson in lessons:
+                name_data = lesson[4].split()
+                text += txt.shared.schedule_lesson_coach.substitute(
+                    name=name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".",
+                    time_start=lesson[1].strftime("%H:%M"),
+                    time_end=lesson[2].strftime("%H:%M")
+                )
+
+        elif category == "coaches":
+            name_data = (await rq.get_coach(int(target))).split()
+            text = "*" + name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".*\n" + weekdays[
+                weekday] + "\n\n"
+
+            for lesson in lessons:
+                text += txt.shared.schedule_lesson_group.substitute(
+                    name=lesson[3],
+                    time_start=lesson[1].strftime("%H:%M"),
+                    time_end=lesson[2].strftime("%H:%M")
+                )
+
+        if not lessons:
+            text += txt.shared.schedule_no_lessons
+
+        result = await callback_query.message.edit_text(text, parse_mode="Markdown",
+                                                        reply_markup=kb.admin.inline.schedule_day(
+                                                            category, target, weekday, bool(lessons)
+                                                        ))
+
+    elif len(data) == 4 or len(data) == 6 and data[4] in ["delNo", "ready"]:
+        target, weekday, mode = data[1], data[2], data[3]
+        text = None
+
+        if category == "groups":
+            text = "*" + await rq.get_group(int(target)) + "*\n" + weekdays[weekday] + "\n\n"
+
+        elif category == "coaches":
+            name_data = (await rq.get_coach(int(target))).split()
+            text = "*" + name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".*\n" + weekdays[
+                weekday] + "\n\n"
+
+        if mode == "add":
+            if category == "groups":
+                result = await callback_query.message.edit_text(text + txt.admin.schedule_add_coach,
+                                                                parse_mode="Markdown",
+                                                                reply_markup=await kb.shared.inline.schedule_coaches_page(
+                                                                    target, weekday, mode
+                                                                ))
+
+            elif category == "coaches":
+                result = await callback_query.message.edit_text(text + txt.admin.schedule_add_group,
+                                                                parse_mode="Markdown",
+                                                                reply_markup=await kb.shared.inline.schedule_groups_page(
+                                                                    target, weekday, mode
+                                                                ))
+
+        elif mode == "edit":
+            lessons = await rq.get_lessons(category, int(target), weekday)
+
+            if lessons:
+                number = 1 if len(data) == 4 else min(int(data[5]), len(lessons)) if int(data[5]) > 0 else 1
+
                 if category == "groups":
-                    data_name = lesson[4].split()
-                    name = data_name[0] + " " + data_name[1][0] + "." + data_name[2][0] + "."
-                    texts.append(txt.admin.schedule_lesson_coach.substitute(
-                        name=name,
+                    name_data = lessons[number - 1][4].split()
+                    text += txt.shared.schedule_lesson_coach.substitute(
+                        name=name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".",
+                        time_start=lessons[number - 1][1].strftime("%H:%M"),
+                        time_end=lessons[number - 1][2].strftime("%H:%M")
+                    )
+
+                elif category == "coaches":
+                    text += txt.shared.schedule_lesson_group.substitute(
+                        name=lessons[number - 1][3],
+                        time_start=lessons[number - 1][1].strftime("%H:%M"),
+                        time_end=lessons[number - 1][2].strftime("%H:%M")
+                    )
+
+                inline = kb.admin.inline.schedule_lesson(category, target, weekday, mode, number, len(lessons))
+
+            else:
+                text += txt.shared.schedule_no_lessons
+                inline = kb.admin.inline.schedule_day(category, target, weekday, bool(lessons))
+
+            result = await callback_query.message.edit_text(text, parse_mode="Markdown", reply_markup=inline)
+
+    elif len(data) == 5:
+        target, weekday, mode, button = data[1], data[2], data[3], data[4].split("-")[0]
+
+        if button in ["left", "right"]:
+            text = None
+
+            if category == "groups":
+                text = "*" + await rq.get_group(int(target)) + "*\n" + weekdays[weekday] + "\n\n"
+
+            elif category == "coaches":
+                name_data = (await rq.get_coach(int(target))).split()
+                text = "*" + name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".*\n" + weekdays[
+                    weekday] + "\n\n"
+
+            lessons = await rq.get_lessons(category, int(target), weekday)
+
+            if lessons:
+                count = len(lessons)
+                number = int(data[4].split("-")[1])
+
+                if button == "left":
+                    number = min(number - 1, count) if number > 1 else 1
+
+                elif button == "right":
+                    number = min(number + 1, count) if number > 0 else 1
+
+                if category == "groups":
+                    name_data = lessons[number - 1][4].split()
+                    text += txt.shared.schedule_lesson_coach.substitute(
+                        name=name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".",
+                        time_start=lessons[number - 1][1].strftime("%H:%M"),
+                        time_end=lessons[number - 1][2].strftime("%H:%M")
+                    )
+
+                elif category == "coaches":
+                    text += txt.shared.schedule_lesson_group.substitute(
+                        name=lessons[number - 1][3],
+                        time_start=lessons[number - 1][1].strftime("%H:%M"),
+                        time_end=lessons[number - 1][2].strftime("%H:%M")
+                    )
+
+                inline = kb.admin.inline.schedule_lesson(category, target, weekday, mode, number, count)
+
+            else:
+                text += txt.shared.schedule_no_lessons
+                inline = kb.admin.inline.schedule_day(category, target, weekday, bool(lessons))
+
+            result = await callback_query.message.edit_text(text, parse_mode="Markdown", reply_markup=inline)
+
+        elif button in ["delete", "delYes"]:
+            lessons = await rq.get_lessons(category, int(target), weekday)
+
+            if lessons:
+                number = int(data[4].split("-")[1])
+                number = min(number, len(lessons)) if number > 0 else 1
+                lesson = lessons[number - 1]
+
+                if button == "delete":
+                    name_data = lesson[4].split()
+                    text = txt.admin.schedule_del_proof.substitute(
+                        weekday=weekdays[weekday],
+                        coach=name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".",
+                        group=lesson[3],
+                        time_start=lessons[number - 1][1].strftime("%H:%M"),
+                        time_end=lessons[number - 1][2].strftime("%H:%M")
+                    )
+
+                    result = await callback_query.message.edit_text(text, parse_mode="Markdown",
+                                                                    reply_markup=kb.admin.inline.schedule_del_proof(
+                                                                        category, target, weekday, mode, number
+                                                                    ))
+
+                elif button == "delYes":
+                    await rq.del_lesson(lesson[0])
+
+                    result = await callback_query.message.edit_text(txt.admin.schedule_del_complete,
+                                                                    reply_markup=kb.admin.inline.ready(
+                                                                        f"schedule_{category}_{target}_{weekday}_{mode}",
+                                                                        number
+                                                                    ))
+
+            else:
+                text = None
+
+                if category == "groups":
+                    text = "*" + await rq.get_group(int(target)) + "*\n" + weekdays[weekday] + "\n\n"
+
+                elif category == "coaches":
+                    name_data = (await rq.get_coach(int(target))).split()
+                    text = "*" + name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".*\n" + weekdays[
+                        weekday] + "\n\n"
+
+                text += txt.shared.schedule_no_lessons
+
+                result = await callback_query.message.edit_text(text, parse_mode="Markdown",
+                                                                reply_markup=kb.admin.inline.schedule_day(
+                                                                    category, target, weekday, bool(lessons)
+                                                                ))
+
+        else:
+            await state.set_state(AddLesson.time_start)
+            await state.update_data(category=category, target=target, weekday=weekday, mode=mode, target2=button)
+
+            result = await callback_query.message.edit_text(txt.admin.schedule_add_time, parse_mode="Markdown")
+
+    elif len(data) == 7 and data[6] == "add-yes":
+        target, weekday, mode, target2, lesson_time = data[1], data[2], data[3], data[4], data[5]
+
+        coach_id = int(target if category == "coaches" else target2)
+        group_id = int(target if category == "groups" else target2)
+
+        if not await rq.get_coach(coach_id) or not await rq.get_group(group_id):
+            await callback_query.message.edit_text(txt.admin.add_error)
+
+            lessons = await rq.get_lessons(category, int(target), weekday)
+            text = None
+
+            if category == "groups":
+                text = "*" + await rq.get_group(int(target)) + "*\n" + weekdays[weekday] + "\n\n"
+
+                for lesson in lessons:
+                    name_data = lesson[4].split()
+                    text += txt.shared.schedule_lesson_coach.substitute(
+                        name=name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".",
                         time_start=lesson[1].strftime("%H:%M"),
                         time_end=lesson[2].strftime("%H:%M")
-                    ))
+                    )
 
-                else:
-                    texts.append(txt.admin.schedule_lesson_group.substitute(
+            elif category == "coaches":
+                name_data = (await rq.get_coach(int(target))).split()
+                text = "*" + name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".*\n" + weekdays[
+                    weekday] + "\n\n"
+
+                for lesson in lessons:
+                    text += txt.shared.schedule_lesson_group.substitute(
                         name=lesson[3],
                         time_start=lesson[1].strftime("%H:%M"),
                         time_end=lesson[2].strftime("%H:%M")
-                    ))
+                    )
 
-            result = await callback_query.message.edit_text(title + "\n\n".join(texts), parse_mode="Markdown",
+            if not lessons:
+                text += txt.shared.schedule_no_lessons
+
+            result = await callback_query.message.edit_text(text, parse_mode="Markdown",
                                                             reply_markup=kb.admin.inline.schedule_day(
-                                                                mode, category, target, day
+                                                                category, target, weekday, bool(lessons)
                                                             ))
 
-    elif len(data) == 5:
-        target, day, btn = data[2], data[3], data[4]
+        else:
+            time_start = datetime.strptime(lesson_time.split("-")[0], "%H:%M").time()
+            time_end = datetime.strptime(lesson_time.split("-")[1], "%H:%M").time()
 
-        if btn == "back":
-            if mode == "show":
-                today = date.today()
-                week_dates = [today - timedelta(days=today.weekday()) + timedelta(days=i) for i in range(7)]
+            await rq.add_lesson(weekday, coach_id, group_id, time_start, time_end)
 
-                result = await callback_query.message.edit_text(txt.admin.schedule_weekdays,
-                                                                reply_markup=kb.admin.inline.schedule_dates(
-                                                                    mode, category, target, week_dates
-                                                                ))
-
-            elif mode == "edit":
-                result = await callback_query.message.edit_text(txt.admin.schedule_weekdays,
-                                                                reply_markup=kb.admin.inline.schedule_weekdays(
-                                                                    mode, category, target
-                                                                ))
-
-        elif btn == "delete":
-            if mode == "show":
-                pass
-
-            elif mode == "edit":
-                pass
+            result = await callback_query.message.edit_text(txt.admin.schedule_add_complete,
+                                                            reply_markup=kb.admin.inline.ready(
+                                                                f"schedule_{category}_{target}_{weekday}_{mode}"
+                                                            ))
 
     await state.update_data(menu_id=result.message_id)
 

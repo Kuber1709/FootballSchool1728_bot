@@ -1,4 +1,6 @@
 import json
+from re import fullmatch
+from datetime import datetime
 
 from aiogram import Router, F
 from aiogram.filters import CommandStart, Command, StateFilter, or_f
@@ -11,8 +13,9 @@ from config import Config
 from database import requests as rq
 from filters import UndoFilter
 from states import (DeleteMenu, AddAdvertisement, AddInformation, AddGroup, AddCoach, AddExercise, AddWorkout,
-                    EditPassword, EditSchedule)
+                    EditPassword, AddLesson)
 from .shared import advertisements_show
+from ..shared import weekdays
 
 admin_messages_router = Router()
 
@@ -26,6 +29,8 @@ media_types = {
     ContentType.STICKER,
     ContentType.ANIMATION
 }
+
+pattern = r'^([01]?[0-9]|2[0-3]):([0-5][0-9])-([01]?[0-9]|2[0-3]):([0-5][0-9])$'
 
 
 @admin_messages_router.message(CommandStart())
@@ -51,7 +56,7 @@ async def cmd_admins_password(message: Message, state: FSMContext):
 
 
 @admin_messages_router.message(F.text == "Назад 🔙")
-async def back(message: Message):
+async def back(message: Message, state: FSMContext):
     await message.answer(message.text, reply_markup=kb.admin.reply.main)
 
 
@@ -152,10 +157,10 @@ async def coaches(message: Message, state: FSMContext):
         result = await message.answer(text=await rq.get_coach(coach_id), reply_markup=kb.admin.inline.coach(coach_id))
 
     elif not count:
-        result = await message.answer(txt.admin.no_coaches)
+        result = await message.answer(txt.shared.no_coaches)
 
     else:
-        result = await message.answer(txt.admin.coaches_names, reply_markup=await kb.admin.inline.coaches_page())
+        result = await message.answer(txt.shared.coaches_names, reply_markup=await kb.admin.inline.coaches_page())
 
     await state.update_data(menu_id=result.message_id)
 
@@ -255,24 +260,13 @@ async def admins_add(message: Message, state: FSMContext):
     await state.update_data(menu_id=result.message_id)
 
 
-@admin_messages_router.message(or_f(F.text.in_(["Расписание 🔔", "Закрыть 🔙"]), UndoFilter("schedule")))
+@admin_messages_router.message(F.text == "Расписание 🔔")
 async def schedule(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
 
-    await message.answer(message.text, reply_markup=kb.admin.reply.schedule_back)
+    await message.answer(message.text, reply_markup=kb.shared.reply.back)
 
-    result = await message.answer(txt.admin.schedule_category, reply_markup=kb.admin.inline.schedule_category("show"))
-
-    await state.update_data(menu_id=result.message_id)
-
-
-@admin_messages_router.message(F.text == "Изменить расписание 🔔")
-async def schedule_edit(message: Message, state: FSMContext):
-    await state.set_state(EditSchedule.menu_id)
-
-    await message.answer(message.text, reply_markup=kb.shared.reply.undo)
-
-    result = await message.answer(txt.admin.schedule_category, reply_markup=kb.admin.inline.schedule_category("edit"))
+    result = await message.answer(txt.shared.schedule_category, reply_markup=kb.shared.inline.schedule_category)
 
     await state.update_data(menu_id=result.message_id)
 
@@ -448,7 +442,45 @@ async def admins_edit_password_new(message: Message, state: FSMContext):
 
         await state.update_data(new_password=message.text, inline_id=result_inline.message_id)
 
-    await state.update_data(menu_id=result.message_id, usrr_msg_id=message.message_id)
+    await state.update_data(menu_id=result.message_id, user_msg_id=message.message_id)
+
+
+@admin_messages_router.message(StateFilter(AddLesson.time_start))
+async def schedule_add_time(message: Message, state: FSMContext):
+    if not message.text or len(message.text) != len(message.text.encode('utf-16-le')) // 2:
+        result = await message.answer(txt.admin.schedule_add_time, parse_mode="Markdown")
+
+    elif not bool(fullmatch(pattern, message.text)):
+        result = await message.answer(txt.admin.schedule_add_time, parse_mode="Markdown")
+
+    else:
+        await state.set_state(DeleteMenu.menu_id)
+        data = await state.get_data()
+
+        time_start = datetime.strptime(message.text.split("-")[0], "%H:%M").time()
+        time_end = datetime.strptime(message.text.split("-")[1], "%H:%M").time()
+
+        category = data.get("category")
+        group = await rq.get_group(int(data.get("target" if category == "groups" else "target2")))
+        coach_data = (await rq.get_coach(int(data.get("target2" if category == "groups" else "target")))).split()
+
+        text = txt.admin.schedule_add_proof.substitute(
+            weekday=weekdays[data.get("weekday")],
+            coach=coach_data[0] + " " + coach_data[1][0] + "." + coach_data[2][0] + ".",
+            group=group,
+            time_start=time_start.strftime("%H:%M"),
+            time_end=time_end.strftime("%H:%M")
+        )
+
+        result = await message.answer(text, parse_mode="Markdown",
+                                      reply_markup=kb.admin.inline.schedule_add_proof(
+                                          category, data.get("target"), data.get("weekday"), data.get("mode"),
+                                          data.get("target2"), message.text
+                                      ))
+
+        await state.update_data(time_start=time_start, time_end=time_end)
+
+    await state.update_data(menu_id=result.message_id, user_msg_id=message.message_id)
 
 
 async def message_save_data(message: Message, state: FSMContext, inline: InlineKeyboardMarkup):

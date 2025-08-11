@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import time
 
 from sqlalchemy import select, delete, update, text
 from sqlalchemy.sql.functions import count
@@ -251,26 +251,25 @@ async def get_admin(a_id: int):
         return (await session.execute(select(Admin.name, Admin.tg_id, Admin.dt).where(Admin.id == a_id))).all()[0]
 
 
-async def get_lessons(weekday: str, day: date = None, group_id: int = None, coach_id: int = None):
+async def get_lessons(category: str, target: int, weekday: str):
     async with async_session() as session:
-        lessons = None
+        return (await session.execute(
+            select(Lesson.id, Lesson.time_start, Lesson.time_end, Group.name, Coach.name)
+            .join(Group, Lesson.group_id == Group.id)
+            .join(Coach, Lesson.coach_id == Coach.id)
+            .where(Lesson.weekday == weekday)
+            .where((Lesson.group_id if category == "groups" else Lesson.coach_id) == target)
+            .order_by(Lesson.time_start))).all()
 
-        if day:
-            lessons = (await session.execute(
-                select(Lesson.id, Lesson.time_start, Lesson.time_end, Group.name, Coach.name)
-                .join(Group, Lesson.group_id == Group.id)
-                .join(Coach, Lesson.coach_id == Coach.id)
-                .where(Lesson.date == day)
-                .where((Lesson.group_id == group_id) if group_id else (Lesson.coach_id == coach_id))
-                .order_by(Lesson.time_start))).all()
 
-        if not lessons:
-            lessons = (await session.execute(
-                select(Lesson.id, Lesson.time_start, Lesson.time_end, Group.name, Coach.name)
-                .join(Group, Lesson.group_id == Group.id)
-                .join(Coach, Lesson.coach_id == Coach.id)
-                .where(Lesson.base_day == weekday)
-                .where((Lesson.group_id == group_id) if group_id else (Lesson.coach_id == coach_id))
-                .order_by(Lesson.time_start))).all()
+async def del_lesson(l_id: int):
+    async with async_session() as session:
+        await session.execute(delete(Lesson).where(Lesson.id == l_id))
+        await session.commit()
 
-        return lessons
+
+async def add_lesson(weekday: str, coach_id: int, group_id: int, time_start: time, time_end: time):
+    async with async_session() as session:
+        session.add(Lesson(weekday=weekday, coach_id=coach_id, group_id=group_id, time_start=time_start,
+                           time_end=time_end))
+        await session.commit()

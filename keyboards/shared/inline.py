@@ -2,6 +2,15 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from database import requests as rq
 
+schedule_category = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(text="Группы", callback_data=f"schedule_groups")
+    ],
+    [
+        InlineKeyboardButton(text="Тренеры", callback_data=f"schedule_coaches")
+    ]
+])
+
 
 async def information_page(page: int = 1):
     buttons = []
@@ -42,5 +51,70 @@ def back(title: str, num: int = 0):
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="Назад 🔙", callback_data=f"{title}_back_{num}")
+        ]
+    ])
+
+
+async def schedule_groups_page(target: str = None, weekday: str = None, mode: str = None):
+    buttons = []
+    groups_list = await rq.get_groups_page()
+    cb_data = f"coaches_{target}_{weekday}_{mode}" if target else "groups"
+
+    for group in groups_list:
+        buttons.append([
+            InlineKeyboardButton(text=group[1], callback_data=f"schedule_{cb_data}_{group[0]}")
+        ])
+
+    buttons.append([
+        InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{cb_data}_back")
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+async def schedule_coaches_page(target: str = None, weekday: str = None, mode: str = None):
+    buttons = []
+    coaches_list = await rq.get_coaches_page()
+    cb_data = f"groups_{target}_{weekday}_{mode}" if target else "coaches"
+
+    for coach in coaches_list:
+        data_name = coach[1].split()
+        name = data_name[0] + " " + data_name[1][0] + "." + data_name[2][0] + "."
+        buttons.append([
+            InlineKeyboardButton(text=name, callback_data=f"schedule_{cb_data}_{coach[0]}")
+        ])
+
+    buttons.append([
+        InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{cb_data}_back")
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def schedule_weekdays(category: str, target: str):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Понедельник", callback_data=f"schedule_{category}_{target}_monday")
+        ],
+        [
+            InlineKeyboardButton(text="Вторник", callback_data=f"schedule_{category}_{target}_tuesday")
+        ],
+        [
+            InlineKeyboardButton(text="Среда", callback_data=f"schedule_{category}_{target}_wednesday")
+        ],
+        [
+            InlineKeyboardButton(text="Четверг", callback_data=f"schedule_{category}_{target}_thursday")
+        ],
+        [
+            InlineKeyboardButton(text="Пятница", callback_data=f"schedule_{category}_{target}_friday")
+        ],
+        [
+            InlineKeyboardButton(text="Суббота", callback_data=f"schedule_{category}_{target}_saturday")
+        ],
+        [
+            InlineKeyboardButton(text="Воскресенье", callback_data=f"schedule_{category}_{target}_sunday")
+        ],
+        [
+            InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{category}_{target}_back")
         ]
     ])

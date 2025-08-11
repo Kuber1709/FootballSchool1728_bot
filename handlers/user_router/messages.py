@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.filters import CommandStart, Command, StateFilter, or_f
+from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
@@ -57,7 +57,7 @@ async def advertisements(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
     count = await rq.cnt_advertisements()
 
-    await message.answer(message.text, reply_markup=kb.user.reply.back)
+    await message.answer(message.text, reply_markup=kb.shared.reply.back)
 
     if not count:
         result = await message.answer(txt.shared.no_advertisements)
@@ -73,7 +73,7 @@ async def information(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
     count = await rq.cnt_information()
 
-    await message.answer(message.text, reply_markup=kb.user.reply.back)
+    await message.answer(message.text, reply_markup=kb.shared.reply.back)
 
     if not count:
         result = await message.answer(txt.shared.no_information)
@@ -90,7 +90,7 @@ async def workouts(message: Message, state: FSMContext):
     await state.set_state(DeleteMenu.menu_id)
     count = await rq.cnt_groups()
 
-    await message.answer(message.text, reply_markup=kb.user.reply.back)
+    await message.answer(message.text, reply_markup=kb.shared.reply.back)
 
     if not count:
         result = await message.answer(txt.shared.no_groups)
@@ -98,6 +98,17 @@ async def workouts(message: Message, state: FSMContext):
     else:
         result = await message.answer(txt.shared.groups_names,
                                       reply_markup=await kb.shared.inline.groups_page("workouts"))
+
+    await state.update_data(menu_id=result.message_id)
+
+
+@user_messages_router.message(F.text == "Расписание 🔔")
+async def schedule(message: Message, state: FSMContext):
+    await state.set_state(DeleteMenu.menu_id)
+
+    await message.answer(message.text, reply_markup=kb.shared.reply.back)
+
+    result = await message.answer(txt.shared.schedule_category, reply_markup=kb.shared.inline.schedule_category)
 
     await state.update_data(menu_id=result.message_id)
 

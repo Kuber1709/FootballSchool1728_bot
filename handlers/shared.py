@@ -2,6 +2,16 @@ import json
 
 from aiogram.types import Message, MessageEntity, InlineKeyboardMarkup
 
+weekdays = {
+    "monday": "Понедельник",
+    "tuesday": "Вторник",
+    "wednesday": "Среда",
+    "thursday": "Четверг",
+    "friday": "Пятница",
+    "saturday": "Суббота",
+    "sunday": "Воскресенье"
+}
+
 
 async def show(message: Message, text: str, entities: list[MessageEntity], file_id: str, mode: str,
                inline: InlineKeyboardMarkup = None):

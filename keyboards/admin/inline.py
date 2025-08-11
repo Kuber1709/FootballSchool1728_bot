@@ -1,4 +1,3 @@
-from datetime import date
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from database import requests as rq
@@ -303,118 +302,58 @@ def admins_del_proof(admin_id: int):
     ])
 
 
-def schedule_category(mode: str):
+def schedule_day(category: str, target: str, weekday: str, edit: bool):
+    buttons = [
+        InlineKeyboardButton(text="➕", callback_data=f"schedule_{category}_{target}_{weekday}_add")
+    ]
+
+    if edit:
+        buttons.append(InlineKeyboardButton(text="📝", callback_data=f"schedule_{category}_{target}_{weekday}_edit"))
+
     return InlineKeyboardMarkup(inline_keyboard=[
+        buttons,
         [
-            InlineKeyboardButton(text="Группы", callback_data=f"schedule_{mode}_groups")
-        ],
-        [
-            InlineKeyboardButton(text="Тренеры", callback_data=f"schedule_{mode}_coaches")
+            InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{category}_{target}_{weekday}_back")
         ]
     ])
 
 
-async def schedule_groups_page(mode: str):
+def schedule_lesson(category: str, target: str, weekday: str, mode: str, number: int, count: int):
     buttons = []
-    groups_list = await rq.get_groups_page()
+    cb_data = f"schedule_{category}_{target}_{weekday}_{mode}"
 
-    for group in groups_list:
-        buttons.append([
-            InlineKeyboardButton(text=group[1], callback_data=f"schedule_{mode}_groups_{group[0]}")
-        ])
+    if not count == 1:
+        if not number == 1:
+            buttons.append(InlineKeyboardButton(text="⬅", callback_data=f"{cb_data}_left-{number}"))
+        if not number == count:
+            buttons.append(InlineKeyboardButton(text="➡", callback_data=f"{cb_data}_right-{number}"))
 
-    buttons.append([
-        InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{mode}_groups_back")
-    ])
-
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-
-async def schedule_coaches_page(mode: str):
-    buttons = []
-    coaches_list = await rq.get_coaches_page()
-
-    for coach in coaches_list:
-        data_name = coach[1].split()
-        name = data_name[0] + " " + data_name[1][0] + "." + data_name[2][0] + "."
-        buttons.append([
-            InlineKeyboardButton(text=name, callback_data=f"schedule_{mode}_coaches_{coach[0]}")
-        ])
-
-    buttons.append([
-        InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{mode}_coaches_back")
-    ])
-
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-
-def schedule_weekdays(mode: str, category: str, target: str):
     return InlineKeyboardMarkup(inline_keyboard=[
+        buttons,
         [
-            InlineKeyboardButton(text="Понедельник", callback_data=f"schedule_{mode}_{category}_{target}_monday")
+            InlineKeyboardButton(text="🗑", callback_data=f"{cb_data}_delete-{number}")
         ],
         [
-            InlineKeyboardButton(text="Вторник", callback_data=f"schedule_{mode}_{category}_{target}_tuesday")
-        ],
-        [
-            InlineKeyboardButton(text="Среда", callback_data=f"schedule_{mode}_{category}_{target}_wednesday")
-        ],
-        [
-            InlineKeyboardButton(text="Четверг", callback_data=f"schedule_{mode}_{category}_{target}_thursday")
-        ],
-        [
-            InlineKeyboardButton(text="Пятница", callback_data=f"schedule_{mode}_{category}_{target}_friday")
-        ],
-        [
-            InlineKeyboardButton(text="Суббота", callback_data=f"schedule_{mode}_{category}_{target}_saturday")
-        ],
-        [
-            InlineKeyboardButton(text="Воскресенье", callback_data=f"schedule_{mode}_{category}_{target}_sunday")
-        ],
-        [
-            InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{mode}_{category}_{target}_back")
+            InlineKeyboardButton(text="Назад 🔙", callback_data=f"{cb_data}_back")
         ]
     ])
 
 
-def schedule_dates(mode: str, category: str, target: str, dates: list):
-    weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-    buttons = []
-
-    for i in range(7):
-        day = dates[i].strftime("%d.%m.%Y")
-        text = day + " (" + weekdays[i] + ")"
-        buttons.append([
-            InlineKeyboardButton(text=text, callback_data=f"schedule_{mode}_{category}_{target}_{day}")
-        ])
-
-    control = []
-    if date.today().isocalendar()[1] - dates[0].isocalendar()[1] < 4:
-        control.append(InlineKeyboardButton(
-            text="⬅", callback_data=f"schedule_{mode}_{category}_{target}_left-{dates[0].strftime("%d.%m.%Y")}")
-        )
-
-    if dates[6].isocalendar()[1] - date.today().isocalendar()[1] < 8:
-        control.append(InlineKeyboardButton(
-            text="➡", callback_data=f"schedule_{mode}_{category}_{target}_right-{dates[6].strftime("%d.%m.%Y")}")
-        )
-
-    buttons.append(control)
-    buttons.append([
-        InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{mode}_{category}_{target}_back")
-    ])
-
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-
-def schedule_day(mode: str, category: str, target: str, day: str):
+def schedule_del_proof(category: str, target: str, weekday: str, mode: str, number: int):
+    cb_data = f"schedule_{category}_{target}_{weekday}_{mode}"
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="➕", callback_data=f"schedule_{mode}_{category}_{target}_{day}_add"),
-            InlineKeyboardButton(text="🗑", callback_data=f"schedule_{mode}_{category}_{target}_{day}_delete"),
-            InlineKeyboardButton(text="📝", callback_data=f"schedule_{mode}_{category}_{target}_{day}_edit")
-        ],
+            InlineKeyboardButton(text="❌", callback_data=f"{cb_data}_delNo_{number}"),
+            InlineKeyboardButton(text="✅", callback_data=f"{cb_data}_delYes-{number}")
+        ]
+    ])
+
+
+def schedule_add_proof(category: str, target: str, weekday: str, mode: str, target2: str, time: str):
+    cb_data = f"schedule_{category}_{target}_{weekday}_{mode}_{target2}_{time}"
+    return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{mode}_{category}_{target}_{day}_back")
+            InlineKeyboardButton(text="❌", callback_data=f"{cb_data}_add-no"),
+            InlineKeyboardButton(text="✅", callback_data=f"{cb_data}_add-yes")
         ]
     ])

@@ -8,6 +8,7 @@ from database import requests as rq
 from filters import CallbackPrefixFilter
 from states import DeleteMenu, AddAdmin
 from .shared import advertisements_show, information_show, workouts_show
+from ..shared import weekdays
 
 user_callback_router = Router()
 
@@ -138,5 +139,80 @@ async def admins(callback_query: CallbackQuery, state: FSMContext):
         result = await callback_query.message.answer(txt.user.admins_add_complete, reply_markup=ReplyKeyboardRemove())
         await result.delete()
         result = await callback_query.message.answer(txt.user.admins_add_complete, reply_markup=kb.admin.reply.main)
+
+    await state.update_data(menu_id=result.message_id)
+
+
+@user_callback_router.callback_query(CallbackPrefixFilter("schedule"))
+async def schedule(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    data = callback_query.data.split("_")[1:]
+    category = data[0]
+    result = None
+
+    if len(data) == 1 or len(data) == 3 and data[2] == "back":
+        if category == "groups":
+            count = await rq.cnt_groups()
+            text = txt.shared.groups_names if count else txt.shared.no_groups
+
+            result = await callback_query.message.edit_text(text,
+                                                            reply_markup=await kb.shared.inline.schedule_groups_page())
+
+        elif category == "coaches":
+            count = await rq.cnt_coaches()
+            text = txt.shared.coaches_names if count else txt.shared.no_coaches
+
+            result = await callback_query.message.edit_text(text,
+                                                            reply_markup=await kb.shared.inline.schedule_coaches_page())
+
+    elif len(data) == 2 or len(data) == 4 and data[3] == "back":
+        target = data[1]
+
+        if target == "back":
+            result = await callback_query.message.edit_text(txt.shared.schedule_category,
+                                                            reply_markup=kb.shared.inline.schedule_category)
+
+        else:
+            result = await callback_query.message.edit_text(txt.shared.schedule_weekdays,
+                                                            reply_markup=kb.shared.inline.schedule_weekdays(
+                                                                category, target
+                                                            ))
+
+
+    elif len(data) == 3:
+        target, weekday = data[1], data[2]
+        lessons = await rq.get_lessons(category, int(target), weekday)
+        text = None
+
+        if category == "groups":
+            text = "*" + await rq.get_group(int(target)) + "*\n" + weekdays[weekday] + "\n\n"
+
+            for lesson in lessons:
+                name_data = lesson[4].split()
+                text += txt.shared.schedule_lesson_coach.substitute(
+                    name=name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".",
+                    time_start=lesson[1].strftime("%H:%M"),
+                    time_end=lesson[2].strftime("%H:%M")
+                )
+
+        elif category == "coaches":
+            name_data = (await rq.get_coach(int(target))).split()
+            text = "*" + name_data[0] + " " + name_data[1][0] + "." + name_data[2][0] + ".*\n" + weekdays[
+                weekday] + "\n\n"
+
+            for lesson in lessons:
+                text += txt.shared.schedule_lesson_group.substitute(
+                    name=lesson[3],
+                    time_start=lesson[1].strftime("%H:%M"),
+                    time_end=lesson[2].strftime("%H:%M")
+                )
+
+        if not lessons:
+            text += txt.shared.schedule_no_lessons
+
+        result = await callback_query.message.edit_text(text, parse_mode="Markdown",
+                                                        reply_markup=kb.admin.inline.schedule_day(
+                                                            category, target, weekday, bool(lessons)
+                                                        ))
 
     await state.update_data(menu_id=result.message_id)

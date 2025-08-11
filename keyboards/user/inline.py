@@ -47,3 +47,11 @@ async def workouts(number: int, group_id: int):
             InlineKeyboardButton(text="Назад 🔙", callback_data=f"workouts_back_{group_id}_{number}")
         ]
     ])
+
+
+def schedule_day(category: str, target: str, weekday: str):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Назад 🔙", callback_data=f"schedule_{category}_{target}_{weekday}_back")
+        ]
+    ])
